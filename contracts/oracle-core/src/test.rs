@@ -20,6 +20,20 @@ fn test_initialize() {
 }
 
 #[test]
+fn test_get_publisher_count() {
+    let (env, client, _) = setup();
+    assert_eq!(client.get_publisher_count(), 0);
+    let pub1 = Address::generate(&env);
+    let pub2 = Address::generate(&env);
+    client.add_publisher(&pub1);
+    assert_eq!(client.get_publisher_count(), 1);
+    client.add_publisher(&pub2);
+    assert_eq!(client.get_publisher_count(), 2);
+    client.remove_publisher(&pub1);
+    assert_eq!(client.get_publisher_count(), 1);
+}
+
+#[test]
 fn test_add_remove_publisher() {
     let (env, client, _) = setup();
     let pub1 = Address::generate(&env);
