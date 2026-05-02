@@ -9,8 +9,8 @@ Provides on-chain price feeds aggregated from multiple trusted publishers via me
 ```
 contracts/
   oracle-core/       # Soroban smart contract (Rust)
-sdk/                 # TypeScript publisher + consumer SDKs (coming soon)
-dashboard/           # React monitoring dashboard (coming soon)
+sdk/                 # TypeScript publisher + consumer SDKs
+dashboard/           # React monitoring dashboard (see issue #6)
 ```
 
 ## How It Works
