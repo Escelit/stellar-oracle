@@ -1,0 +1,33 @@
+VERSION = "2.0.0"
+
+[DOCUMENTATION]
+ORG_NAME = "Stellar Oracle"
+ORG_URL = "https://github.com/Escelit/stellar-oracle"
+ORG_DESCRIPTION = "Decentralized price oracle network for the Stellar/Soroban ecosystem."
+ORG_GITHUB = "Escelit"
+
+[[PRINCIPALS]]
+name = "Stellar Oracle Maintainer"
+github = "Escelit"
+
+# Soroban contract deployments
+[[CONTRACTS]]
+name = "oracle-core"
+description = "Median-aggregated price oracle for Soroban smart contracts"
+network = "testnet"
+address = "CA76KLJ2CDD5OHVGD6MUV3QVZYRNJJQLIHBMWD353J6ES4JZXCO4L5OQ"
+
+# Supported asset pairs
+[[CURRENCIES]]
+code = "XLM"
+issuer = "native"
+display_decimals = 7
+desc = "Stellar Lumens — native asset"
+
+[[CURRENCIES]]
+code = "BTC"
+desc = "Bitcoin price feed (USD denominated, scaled 1e7)"
+
+[[CURRENCIES]]
+code = "ETH"
+desc = "Ethereum price feed (USD denominated, scaled 1e7)"
