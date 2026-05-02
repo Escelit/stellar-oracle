@@ -50,3 +50,9 @@ sdk/src/
 ## Questions?
 
 Open a GitHub Discussion or drop into the Stellar Discord.
+
+## Community
+
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Security Policy](SECURITY.md)
+- [Architecture Overview](docs/architecture.md)
