@@ -4,3 +4,8 @@ target
 # Local settings
 .soroban
 .stellar
+
+# Node
+node_modules/
+sdk/node_modules/
+sdk/dist/
