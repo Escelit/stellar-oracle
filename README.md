@@ -53,7 +53,7 @@ rustup target add wasm32-unknown-unknown
 ### Build
 
 ```bash
-cargo build --release --target wasm32-unknown-unknown
+cargo build --release --target wasm32v1-none
 ```
 
 ### Test
@@ -66,10 +66,16 @@ cargo test
 
 ```bash
 stellar contract deploy \
-  --wasm target/wasm32-unknown-unknown/release/oracle_core.wasm \
+  --wasm target/wasm32v1-none/release/oracle_core.wasm \
   --network testnet \
   --source <your-account>
 ```
+
+## Testnet Deployment
+
+| Network | Contract ID |
+|---|---|
+| Testnet | [`CA76KLJ2CDD5OHVGD6MUV3QVZYRNJJQLIHBMWD353J6ES4JZXCO4L5OQ`](https://lab.stellar.org/r/testnet/contract/CA76KLJ2CDD5OHVGD6MUV3QVZYRNJJQLIHBMWD353J6ES4JZXCO4L5OQ) |
 
 ## Contributing
 
