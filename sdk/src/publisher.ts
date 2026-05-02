@@ -29,11 +29,29 @@ export class OraclePublisher {
   }
 
   /**
-   * Submit a price for an asset pair.
+   * Submit a price for an asset pair, with exponential backoff retry (max 3 attempts).
    * @param asset  e.g. "XLM/USD"
    * @param price  human-readable float, e.g. 0.12
    */
   async submitPrice(asset: string, price: number): Promise<string> {
+    const maxAttempts = 3;
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        return await this._submitOnce(asset, price);
+      } catch (err) {
+        lastError = err;
+        if (attempt < maxAttempts) {
+          const delayMs = 1000 * 2 ** (attempt - 1); // 1s, 2s
+          console.warn(`[submitPrice] attempt ${attempt} failed, retrying in ${delayMs}ms:`, err);
+          await new Promise((r) => setTimeout(r, delayMs));
+        }
+      }
+    }
+    throw lastError;
+  }
+
+  private async _submitOnce(asset: string, price: number): Promise<string> {
     const scaledPrice = BigInt(Math.round(price * 1e7));
     const timestamp = Math.floor(Date.now() / 1000);
 
