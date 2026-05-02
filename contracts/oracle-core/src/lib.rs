@@ -1,14 +1,30 @@
 #![no_std]
 
 use soroban_sdk::{
-    contract, contractimpl, contracttype, symbol_short, Address, Env, Map, String, Symbol, Vec,
+    contract, contractevent, contractimpl, contracttype, symbol_short, Address, Env, Map, String,
+    Symbol, Vec,
 };
+
+// ── Events ───────────────────────────────────────────────────────────────────
+
+#[contractevent]
+pub struct PriceUpdated {
+    #[topic]
+    pub asset: String,
+    pub price: i128,
+    pub timestamp: u64,
+    pub num_sources: u32,
+}
 
 // ── Storage keys ────────────────────────────────────────────────────────────
 
 const ADMIN: Symbol = symbol_short!("ADMIN");
 const FEEDS: Symbol = symbol_short!("FEEDS");
 const PUBLISHERS: Symbol = symbol_short!("PUBS");
+const MAX_DEV: Symbol = symbol_short!("MAXDEV");
+
+// TTL: ~7 days (ledger closes ~every 5s, 7*24*3600/5 = 120_960)
+const ENTRY_TTL: u32 = 120_960;
 
 // ── Data types ───────────────────────────────────────────────────────────────
 
@@ -16,8 +32,8 @@ const PUBLISHERS: Symbol = symbol_short!("PUBS");
 #[contracttype]
 #[derive(Clone)]
 pub struct PriceEntry {
-    pub price: i128,     // price scaled by 1e7 (e.g. 1 XLM = 1_0000000)
-    pub timestamp: u64,  // Unix timestamp (seconds)
+    pub price: i128,    // price scaled by 1e7 (e.g. 1 XLM = 1_0000000)
+    pub timestamp: u64, // Unix timestamp (seconds)
     pub publisher: Address,
 }
 
@@ -25,10 +41,10 @@ pub struct PriceEntry {
 #[contracttype]
 #[derive(Clone)]
 pub struct FeedData {
-    pub asset: String,       // e.g. "XLM/USD"
-    pub price: i128,         // median price, scaled by 1e7
-    pub timestamp: u64,      // timestamp of latest update
-    pub num_sources: u32,    // how many publishers contributed
+    pub asset: String,    // e.g. "XLM/USD"
+    pub price: i128,      // median price, scaled by 1e7
+    pub timestamp: u64,   // timestamp of latest update
+    pub num_sources: u32, // how many publishers contributed
 }
 
 // ── Errors ───────────────────────────────────────────────────────────────────
@@ -42,6 +58,7 @@ pub enum OracleError {
     InsufficientSources = 4,
     PublisherAlreadyExists = 5,
     PublisherNotFound = 6,
+    PriceDeviationExceeded = 7,
 }
 
 // ── Contract ─────────────────────────────────────────────────────────────────
@@ -71,6 +88,18 @@ impl OracleContract {
     pub fn set_admin(env: Env, new_admin: Address) {
         Self::require_admin(&env);
         env.storage().instance().set(&ADMIN, &new_admin);
+    }
+
+    /// Set maximum allowed deviation from current median in basis points (admin only).
+    /// E.g. 1000 = 10%. Set to 0 to disable the circuit breaker.
+    pub fn set_max_deviation_bps(env: Env, max_bps: u32) {
+        Self::require_admin(&env);
+        env.storage().instance().set(&MAX_DEV, &max_bps);
+    }
+
+    /// Get the configured max deviation in basis points (0 = disabled).
+    pub fn get_max_deviation_bps(env: Env) -> u32 {
+        env.storage().instance().get(&MAX_DEV).unwrap_or(0)
     }
 
     // ── Publisher management ─────────────────────────────────────────────────
@@ -113,12 +142,34 @@ impl OracleContract {
     // ── Price submission ─────────────────────────────────────────────────────
 
     /// Submit a price update for an asset pair (publishers only).
+    /// Rejected if the price deviates beyond `max_deviation_bps` from the current median.
     /// Prices from all publishers are aggregated via median.
     pub fn submit_price(env: Env, publisher: Address, asset: String, price: i128, timestamp: u64) {
         publisher.require_auth();
         Self::require_publisher(&env, &publisher);
 
-        // Store this publisher's entry under a per-asset key
+        // Circuit breaker: reject if price deviates too far from current median
+        let max_bps: u32 = env.storage().instance().get(&MAX_DEV).unwrap_or(0);
+        if max_bps > 0 {
+            let feeds: Map<String, FeedData> = env.storage().instance().get(&FEEDS).unwrap();
+            if let Some(current) = feeds.get(asset.clone()) {
+                let median = current.price;
+                if median > 0 {
+                    // deviation = |price - median| / median * 10_000
+                    let diff = if price > median {
+                        price - median
+                    } else {
+                        median - price
+                    };
+                    // multiply first to avoid precision loss (median is scaled 1e7)
+                    let deviation_bps = (diff * 10_000) / median;
+                    if deviation_bps > max_bps as i128 {
+                        panic!("price deviation exceeded");
+                    }
+                }
+            }
+        }
+
         let entry_key = Self::entry_key(&env, &asset, &publisher);
         let entry = PriceEntry {
             price,
@@ -126,9 +177,21 @@ impl OracleContract {
             publisher: publisher.clone(),
         };
         env.storage().temporary().set(&entry_key, &entry);
+        env.storage()
+            .temporary()
+            .extend_ttl(&entry_key, ENTRY_TTL, ENTRY_TTL);
 
-        // Re-aggregate all known publisher prices for this asset
-        Self::aggregate(&env, &asset);
+        // Re-aggregate and emit event
+        let new_feed = Self::aggregate(&env, &asset);
+        if let Some(feed) = new_feed {
+            PriceUpdated {
+                asset,
+                price: feed.price,
+                timestamp: feed.timestamp,
+                num_sources: feed.num_sources,
+            }
+            .publish(&env);
+        }
     }
 
     // ── Price reads ──────────────────────────────────────────────────────────
@@ -173,8 +236,8 @@ impl OracleContract {
         (asset.clone(), publisher.clone())
     }
 
-    /// Collect all publisher entries for an asset and compute the median price.
-    fn aggregate(env: &Env, asset: &String) {
+    /// Collect all publisher entries for an asset, compute the median, persist, and return it.
+    fn aggregate(env: &Env, asset: &String) -> Option<FeedData> {
         let pubs: Vec<Address> = env.storage().instance().get(&PUBLISHERS).unwrap();
         let mut prices: Vec<i128> = Vec::new(env);
         let mut latest_ts: u64 = 0;
@@ -190,7 +253,7 @@ impl OracleContract {
         }
 
         if prices.is_empty() {
-            return;
+            return None;
         }
 
         let median = Self::median(env, &prices);
@@ -202,8 +265,9 @@ impl OracleContract {
         };
 
         let mut feeds: Map<String, FeedData> = env.storage().instance().get(&FEEDS).unwrap();
-        feeds.set(asset.clone(), feed);
+        feeds.set(asset.clone(), feed.clone());
         env.storage().instance().set(&FEEDS, &feeds);
+        Some(feed)
     }
 
     /// Compute median of a non-empty price list (insertion sort, suitable for small N).
