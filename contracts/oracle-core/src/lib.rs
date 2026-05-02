@@ -139,6 +139,12 @@ impl OracleContract {
         env.storage().instance().get(&PUBLISHERS).unwrap()
     }
 
+    /// Return the number of registered publishers.
+    pub fn get_publisher_count(env: Env) -> u32 {
+        let pubs: Vec<Address> = env.storage().instance().get(&PUBLISHERS).unwrap();
+        pubs.len()
+    }
+
     // ── Price submission ─────────────────────────────────────────────────────
 
     /// Submit a price update for an asset pair (publishers only).
