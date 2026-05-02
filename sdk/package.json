@@ -1,0 +1,21 @@
+{
+  "name": "@stellar-oracle/sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for the Stellar Oracle price feed network",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "publisher-bot": "node dist/publisher-bot.js"
+  },
+  "dependencies": {
+    "@stellar/stellar-sdk": "13.3.0"
+  },
+  "devDependencies": {
+    "@types/json-schema": "^7.0.15",
+    "@types/node": "22.15.3",
+    "@types/urijs": "^1.19.26",
+    "json-schema": "^0.4.0",
+    "typescript": "5.8.3"
+  }
+}
