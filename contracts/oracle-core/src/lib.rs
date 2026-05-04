@@ -246,15 +246,11 @@ impl OracleContract {
     fn aggregate(env: &Env, asset: &String) -> Option<FeedData> {
         let pubs: Vec<Address> = env.storage().instance().get(&PUBLISHERS).unwrap();
         let mut prices: Vec<i128> = Vec::new(env);
-        let mut latest_ts: u64 = 0;
 
         for publisher in pubs.iter() {
             let key = Self::entry_key(env, asset, &publisher);
             if let Some(entry) = env.storage().temporary().get::<_, PriceEntry>(&key) {
                 prices.push_back(entry.price);
-                if entry.timestamp > latest_ts {
-                    latest_ts = entry.timestamp;
-                }
             }
         }
 
@@ -266,7 +262,7 @@ impl OracleContract {
         let feed = FeedData {
             asset: asset.clone(),
             price: median,
-            timestamp: latest_ts,
+            timestamp: env.ledger().timestamp(),
             num_sources: prices.len(),
         };
 
