@@ -92,6 +92,7 @@ describe("OraclePublisher retry", () => {
     getAccount: jest.fn(),
     prepareTransaction: jest.fn(),
     sendTransaction: jest.fn(),
+    getTransaction: jest.fn(),
   };
 
   function makePublisher() {
@@ -126,6 +127,7 @@ describe("OraclePublisher retry", () => {
       sign: jest.fn(),
     });
     mockServer.sendTransaction.mockResolvedValue({ status: "PENDING", hash: "abc123" });
+    mockServer.getTransaction.mockResolvedValue({ status: "SUCCESS" });
 
     const publisher = makePublisher();
     const hash = await publisher.submitPrice("XLM/USD", 0.12);
@@ -145,6 +147,7 @@ describe("OraclePublisher retry", () => {
       .mockResolvedValue(fakeAccount);
     mockServer.prepareTransaction.mockResolvedValue({ sign: jest.fn() });
     mockServer.sendTransaction.mockResolvedValue({ status: "PENDING", hash: "retry_hash" });
+    mockServer.getTransaction.mockResolvedValue({ status: "SUCCESS" });
 
     const publisher = makePublisher();
     const hash = await publisher.submitPrice("XLM/USD", 0.12);

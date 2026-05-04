@@ -80,6 +80,18 @@ export class OraclePublisher {
     if (result.status === "ERROR") {
       throw new Error(`Transaction failed: ${JSON.stringify(result.errorResult)}`);
     }
-    return result.hash;
+
+    // Poll until the transaction is confirmed (SUCCESS) or failed
+    const hash = result.hash;
+    for (let i = 0; i < 20; i++) {
+      await new Promise((r) => setTimeout(r, 1500));
+      const tx = await this.server.getTransaction(hash);
+      if (tx.status === "SUCCESS") return hash;
+      if (tx.status === "FAILED") {
+        throw new Error(`Transaction failed on-chain: ${hash}`);
+      }
+      // status === "NOT_FOUND" means still pending — keep polling
+    }
+    throw new Error(`Transaction not confirmed after timeout: ${hash}`);
   }
 }
