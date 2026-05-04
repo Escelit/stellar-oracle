@@ -36,6 +36,7 @@ async function run() {
   const secret = process.env.PUBLISHER_SECRET;
   const contractId = process.env.CONTRACT_ID;
   const rpcUrl = process.env.RPC_URL ?? "https://soroban-testnet.stellar.org";
+  const networkPassphrase = process.env.ORACLE_NETWORK ?? Networks.TESTNET;
   const dryRun = process.argv.includes("--dry-run");
   const once = process.argv.includes("--once");
 
@@ -48,7 +49,7 @@ async function run() {
   const publisher = dryRun
     ? null
     : new OraclePublisher(
-        { contractId: contractId!, networkPassphrase: Networks.TESTNET, rpcUrl },
+        { contractId: contractId!, networkPassphrase, rpcUrl },
         keypair
       );
 
