@@ -38,27 +38,6 @@ We leverage the cutting-edge features of **Soroban** to provide a reliable and g
 
 ---
 
-## 💰 Earn & Contribute
-
-This project is part of the **Stellar Wave Program**. By contributing, you not only help secure the Stellar ecosystem but can also earn rewards for your merged pull requests.
-
-### 🌟 Wanted: Good First Issues
-New to Soroban? These issues are perfect for getting your feet wet:
-| Issue | Description | Difficulty |
-| :--- | :--- | :--- |
-| [#41](ISSUES.md#L632) | Add `get_publisher_count()` view function | Easy |
-| [#13](ISSUES.md#L202) | Add Dockerfile for the publisher bot | Medium |
-| [#25](ISSUES.md#L380) | Complete the `read-prices` example script | Easy |
-| [#51](ISSUES.md#L780) | Integrate Rust Clippy & Fmt into CI | Easy |
-
-### 🚀 Advanced Bounties
-Ready for a challenge? Help us build the future of the oracle:
-- **TWAP Aggregation ([#2](ISSUES.md#L23))**: Implement time-weighted average price history.
-- **Publisher Reputation ([#3](ISSUES.md#L40))**: Build an on-chain scoring system for data providers.
-- **React Dashboard ([#5](ISSUES.md#L72))**: Create a real-time monitoring interface with Tailwind.
-
----
-
 ## 🏗️ Technical Architecture
 
 ### Data Flow Sequence
@@ -81,6 +60,31 @@ sequenceDiagram
     D->>C: get_price_fresh(asset, age)
     C->>I: Read Median & Timestamp
     C-->>D: Return Validated Price
+```
+
+---
+
+## 📂 Project Structure
+
+```text
+.
+├── contracts/
+│   └── oracle-core/         # Main Soroban Smart Contract (Rust)
+│       ├── src/
+│       │   ├── lib.rs       # Core logic: Aggregation & Storage
+│       │   └── test.rs      # Comprehensive contract tests
+│       └── Cargo.toml       # Contract dependencies & metadata
+├── sdk/                     # Multi-language Developer Tools
+│   ├── src/                 # TypeScript source files
+│   │   ├── publisher.ts     # Data submission logic
+│   │   ├── consumer.ts      # Price reading & validation
+│   │   └── publisher-bot.ts # Automated price feed agent
+│   ├── examples/            # Ready-to-run integration examples
+│   └── package.json         # SDK configuration & scripts
+├── docs/                    # Deep-dive documentation & whitepapers
+├── stellar.toml             # Network metadata & contract configurations
+├── stellar_oracle_logo.png  # Project branding assets
+└── README.md                # You are here!
 ```
 
 ---
@@ -143,6 +147,53 @@ pub fn swap_assets(env: Env, oracle: Address) {
     let price = client.get_price_fresh(&String::from_str(&env, "BTC/USD"), &600).price;
     // ... execute swap logic with 1e7 scaled price
 }
+```
+
+---
+
+## 💰 Earn & Contribute
+
+This project is part of the **Stellar Wave Program**. By contributing, you not only help secure the Stellar ecosystem but can also earn rewards for your merged pull requests.
+
+### 🌟 Wanted: Good First Issues
+New to Soroban? These issues are perfect for getting your feet wet:
+| Issue | Description | Difficulty |
+| :--- | :--- | :--- |
+| [#41](ISSUES.md#L632) | Add `get_publisher_count()` view function | Easy |
+| [#13](ISSUES.md#L202) | Add Dockerfile for the publisher bot | Medium |
+| [#25](ISSUES.md#L380) | Complete the `read-prices` example script | Easy |
+| [#51](ISSUES.md#L780) | Integrate Rust Clippy & Fmt into CI | Easy |
+
+### 🚀 Advanced Bounties
+Ready for a challenge? Help us build the future of the oracle:
+- **TWAP Aggregation ([#2](ISSUES.md#L23))**: Implement time-weighted average price history.
+- **Publisher Reputation ([#3](ISSUES.md#L40))**: Build an on-chain scoring system for data providers.
+- **React Dashboard ([#5](ISSUES.md#L72))**: Create a real-time monitoring interface with Tailwind.
+
+---
+
+## 🏗️ Technical Architecture (Detailed)
+
+### Data Flow Sequence
+```mermaid
+sequenceDiagram
+    autonumber
+    participant P as Data Publisher
+    participant C as Oracle Contract
+    participant S as Temporary Storage
+    participant I as Instance Storage
+    participant D as Consumer dApp
+
+    P->>C: submit_price(asset, price, ts)
+    Note over C: Circuit Breaker Check
+    C->>S: Update per-publisher entry
+    C->>C: aggregate(asset)
+    C->>I: Update Global Median
+    C-->>P: PriceUpdated Event
+    
+    D->>C: get_price_fresh(asset, age)
+    C->>I: Read Median & Timestamp
+    C-->>D: Return Validated Price
 ```
 
 ---
