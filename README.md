@@ -5,14 +5,12 @@
 # Stellar Oracle: The Data Backbone of Soroban DeFi
 
 [![Network](https://img.shields.io/badge/Network-Stellar_Testnet-blueviolet)](https://lab.stellar.org/r/testnet/contract/CA76KLJ2CDD5OHVGD6MUV3QVZYRNJJQLIHBMWD353J6ES4JZXCO4L5OQ)
-[![Wave Program](https://img.shields.io/badge/Rewards-Stellar_Wave_Program-gold)](https://drips.network/wave/stellar)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Soroban](https://img.shields.io/badge/Platform-Soroban-black)](https://soroban.stellar.org)
 
 **Stellar Oracle** is an open-source, decentralized price feed network designed specifically for the Soroban smart contract platform. We provide the high-fidelity, outlier-resistant data required to power the next generation of DeFi, RWAs, and decentralized insurance on Stellar.
 
-> [!IMPORTANT]
-> **Contributors Wanted!** We are actively seeking developers to help build out the monitoring dashboard, TWAP aggregation, and publisher reputation systems. Earn rewards via the [Stellar Wave Program](https://drips.network/wave/stellar).
+> **Contributors Wanted!** We are actively seeking developers to help build out the monitoring dashboard, TWAP aggregation, and publisher reputation systems.
 
 ---
 
@@ -35,6 +33,16 @@ We leverage the cutting-edge features of **Soroban** to provide a reliable and g
   - **Instance Storage**: Stores global feed state and publisher whitelists for high-speed access.
   - **Temporary Storage**: Stores granular, per-publisher price entries. This drastically reduces "state bloat" and keeps the contract footprint lean.
 - **🚨 On-Chain Circuit Breaker**: Admin-configurable `max_deviation_bps` rejects any submission that deviates too far from the current median—protecting consumers from flash-crash anomalies.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Smart Contracts**: [Rust](https://www.rust-lang.org/) + [Soroban SDK](https://soroban.stellar.org/)
+- **SDK & Tooling**: [TypeScript](https://www.typescriptlang.org/) + [Stellar SDK](https://github.com/stellar/js-stellar-sdk)
+- **Deployment**: [Stellar CLI](https://developers.stellar.org/docs/tools/stellar-cli)
+- **Environment**: [Stellar Testnet](https://developers.stellar.org/docs/glossary/testnet/)
+- **Documentation**: [Mermaid.js](https://mermaid.js.org/) for architecture diagrams
 
 ---
 
@@ -151,9 +159,9 @@ pub fn swap_assets(env: Env, oracle: Address) {
 
 ---
 
-## 💰 Earn & Contribute
+## 🤝 Contributing
 
-This project is part of the **Stellar Wave Program**. By contributing, you not only help secure the Stellar ecosystem but can also earn rewards for your merged pull requests.
+We welcome contributions of all kinds! Whether you're fixing bugs, improving documentation, or building new features, your help is appreciated.
 
 ### 🌟 Wanted: Good First Issues
 New to Soroban? These issues are perfect for getting your feet wet:
@@ -164,7 +172,7 @@ New to Soroban? These issues are perfect for getting your feet wet:
 | [#25](ISSUES.md#L380) | Complete the `read-prices` example script | Easy |
 | [#51](ISSUES.md#L780) | Integrate Rust Clippy & Fmt into CI | Easy |
 
-### 🚀 Advanced Bounties
+### 🚀 Advanced Tasks
 Ready for a challenge? Help us build the future of the oracle:
 - **TWAP Aggregation ([#2](ISSUES.md#L23))**: Implement time-weighted average price history.
 - **Publisher Reputation ([#3](ISSUES.md#L40))**: Build an on-chain scoring system for data providers.

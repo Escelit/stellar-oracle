@@ -1,6 +1,4 @@
-# Contributing to Stellar Oracle
-
-Thanks for your interest! This project participates in the [Stellar Wave Program](https://drips.network/wave/stellar) — contributors can earn rewards for merged PRs.
+Thanks for your interest in contributing to the Stellar Oracle!
 
 ## Getting Started
 
@@ -25,7 +23,7 @@ cd sdk && npm install && npm run build
 
 ## How to Contribute
 
-1. Pick an open issue (Wave bounty issues are labeled `wave-bounty`)
+1. Pick an open issue
 2. Comment on the issue to claim it
 3. Fork the repo and create a branch: `git checkout -b feat/your-feature`
 4. Make your changes with tests
