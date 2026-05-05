@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="stellar_oracle_logo_1777981420458.png" width="350" alt="Stellar Oracle Logo">
+</p>
+
 # Stellar Oracle
 
 <div align="center">
@@ -38,15 +42,27 @@
 
 ## 🌌 Overview
 
-**Stellar Oracle** is a high-fidelity data bridge for the Stellar blockchain. It enables Soroban smart contracts to access real-world asset prices with high confidence by aggregating data from multiple independent publishers.
+In the world of decentralized finance (DeFi) and Real-World Assets (RWAs), smart contracts are often "walled gardens"—they cannot natively access data from outside the blockchain. **Stellar Oracle** serves as the vital bridge, bringing high-fidelity, real-time price data into the Soroban ecosystem.
 
-### Why Stellar Oracle?
+### The Problem
+Traditional oracles often suffer from three major vulnerabilities:
+1. **Single Point of Failure**: Relying on a single data source or publisher can lead to catastrophic losses if that source is compromised.
+2. **Outlier Sensitivity**: Simple average (mean) calculations are easily skewed by a single "fat-finger" trade or a flash-crash on one exchange.
+3. **High Latency & Costs**: Many oracles are too slow or too expensive to use for high-frequency DeFi operations.
 
-- **🛡️ Median Aggregation**: Automatically filters out outliers and malicious reports. If one source is compromised, the median remains stable.
-- **⚡ Soroban Optimized**: Built from the ground up for the Soroban WASM runtime, utilizing hybrid storage for maximum efficiency.
-- **🚨 Circuit Breaker**: Prevents price manipulation through admin-configurable deviation limits.
-- **📅 Freshness First**: Integrated staleness checks ensure that DeFi protocols never act on outdated information.
-- **📦 Lightweight SDK**: Zero-dependency TypeScript SDK for seamless publisher and consumer integration.
+### Our Solution
+Stellar Oracle is engineered to solve these challenges through a decentralized, multi-publisher model:
+
+- **Decentralized Consensus**: Instead of trusting one source, we whitelist multiple independent **Publishers** (e.g., specialized data bots, exchanges, or institutional providers).
+- **Outlier-Resistant Math**: By using **Median Aggregation**, we ensure that even if a significant minority of publishers report erroneous data, the resulting on-chain price remains accurate to the market consensus.
+- **Soroban-Native Efficiency**: We utilize Stellar's unique storage tiers—storing global results in `Instance` storage for fast reads, while relegating individual publisher footprints to `Temporary` storage to keep the network lean and costs ultra-low.
+
+### Core Value Proposition
+For developers building on Stellar, this oracle provides the "Source of Truth" needed for:
+- **Lending Protocols**: Accurate collateral valuation and liquidation triggers.
+- **Stablecoins**: Maintaining robust pegs against external fiat or assets.
+- **Escrow Services**: Automated release of funds based on verified market conditions.
+- **DEX Aggregators**: Precision routing and slippage calculation.
 
 ---
 
