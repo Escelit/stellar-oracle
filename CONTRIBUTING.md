@@ -1,56 +1,137 @@
-Thanks for your interest in contributing to the Stellar Oracle!
+# Contributing to Stellar Oracle
 
-## Getting Started
+First off, thank you for taking the time to contribute! It’s people like you that make **Stellar Oracle** a robust and reliable piece of infrastructure for the entire Soroban ecosystem.
+
+All types of contributions are encouraged and valued. See the [Table of Contents](#table-of-contents) for different ways to help and details about how this project handles them. Please make sure to read the relevant section before making your contribution.
+
+---
+
+## 📋 Table of Contents
+
+- [Code of Conduct](#code-of-conduct)
+- [How Can I Contribute?](#how-can-i-contribute)
+  - [Reporting Bugs](#reporting-bugs)
+  - [Suggesting Enhancements](#suggesting-enhancements)
+  - [Your First Code Contribution](#your-first-code-contribution)
+- [Styleguides](#styleguides)
+  - [Commit Messages](#commit-messages)
+  - [Rust Styleguide](#rust-styleguide)
+  - [TypeScript Styleguide](#typescript-styleguide)
+- [Setting Up Your Development Environment](#setting-up-your-development-environment)
+- [Testing](#testing)
+
+---
+
+## 🤝 Code of Conduct
+
+This project and everyone participating in it is governed by the [Stellar Oracle Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
+
+---
+
+## 🚀 How Can I Contribute?
+
+### Reporting Bugs
+If you find a bug, please create an issue. A great bug report includes:
+- A clear, descriptive title.
+- Steps to reproduce the problem.
+- Observed vs. Expected behavior.
+- Screenshots or logs if applicable.
+- Environment details (OS, Node version, Rust version).
+
+### Suggesting Enhancements
+We love new ideas! When suggesting an enhancement:
+- Check if it’s already been suggested in the [Issues](../../issues) or [Discussions](../../discussions).
+- Explain **why** this enhancement would be useful to the most users.
+- Provide a step-by-step description of the suggested enhancement.
+
+### Your First Code Contribution
+1. **Find an Issue**: Browse our [Issues](../../issues) and look for the `good first issue` label.
+2. **Claim It**: Comment on the issue so others know you are working on it.
+3. **Setup Environment**: Follow the [Setup](#setting-up-your-development-environment) instructions below.
+4. **Fork and Branch**: Fork the repo and create a branch with a descriptive name (e.g., `feat/add-new-view-function` or `fix/sdk-timeout-bug`).
+5. **Develop**: Write your code and accompanying tests.
+6. **Lint & Format**: Ensure your code follows our [Styleguides](#styleguides).
+7. **Submit PR**: Open a Pull Request against the `main` branch.
+
+---
+
+## 💻 Setting Up Your Development Environment
 
 ### Prerequisites
-- Rust + `wasm32-unknown-unknown` target
-- Node.js 18+
-- Stellar CLI
+- **Rust Toolchain**: [Install Rust](https://rustup.rs/) and the Wasm target.
+  ```bash
+  rustup target add wasm32-unknown-unknown
+  ```
+- **Stellar CLI**: Essential for contract deployment and interaction.
+  ```bash
+  cargo install --locked stellar-cli --all-features
+  ```
+- **Node.js**: Version 18 or higher for SDK development.
 
-```bash
-rustup target add wasm32-unknown-unknown
-```
+### Workspace Setup
+1. **Clone and Install**:
+   ```bash
+   git clone https://github.com/Escelit/stellar-oracle.git
+   cd stellar-oracle
+   cd sdk && npm install && cd ..
+   ```
+2. **Build the Contract**:
+   ```bash
+   cargo build --release --target wasm32v1-none
+   ```
 
-### Run contract tests
+---
+
+## 🧪 Testing
+
+We take testing seriously. No PR will be merged without accompanying tests.
+
+### Contract Testing (Rust)
+Run the core logic tests:
 ```bash
 cargo test
 ```
-
-### Build the SDK
+To see output for debugging:
 ```bash
-cd sdk && npm install && npm run build
+cargo test -- --nocapture
 ```
 
-## How to Contribute
-
-1. Pick an open issue
-2. Comment on the issue to claim it
-3. Fork the repo and create a branch: `git checkout -b feat/your-feature`
-4. Make your changes with tests
-5. Open a PR — reference the issue number in the description
-
-## Project Structure
-
-```
-contracts/oracle-core/   # Soroban smart contract (Rust)
-sdk/src/
-  publisher.ts           # Submit prices on-chain
-  consumer.ts            # Read prices from on-chain
-  publisher-bot.ts       # Automated price feed bot
+### SDK Testing (TypeScript)
+Ensure the SDK and publisher bot logic are sound:
+```bash
+cd sdk
+npm test
 ```
 
-## Code Standards
+---
 
-- Rust: run `cargo clippy` and `cargo fmt` before committing
-- TypeScript: keep strict mode, no `any` unless unavoidable
-- All new contract functions must have tests in `test.rs`
+## 📏 Styleguides
 
-## Questions?
+### Commit Messages
+We follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification. This helps us generate clear changelogs and maintain a clean history.
+- `feat: ...` for new features.
+- `fix: ...` for bug fixes.
+- `docs: ...` for documentation changes.
+- `style: ...` for formatting, missing semi-colons, etc.
+- `refactor: ...` for code changes that neither fix a bug nor add a feature.
 
-Open a GitHub Discussion or drop into the Stellar Discord.
+### Rust Styleguide
+- Run `cargo fmt` to ensure standard formatting.
+- Run `cargo clippy` to catch common mistakes and unoptimized code.
+- Avoid using `panic!` in contract code where an `Error` enum variant can be returned instead.
 
-## Community
+### TypeScript Styleguide
+- Use **Strict Mode** (defined in `tsconfig.json`).
+- Avoid `any` types; prefer specific interfaces or generics.
+- Document all public classes and methods using JSDoc.
 
-- [Code of Conduct](CODE_OF_CONDUCT.md)
-- [Security Policy](SECURITY.md)
-- [Architecture Overview](docs/architecture.md)
+---
+
+## 📁 Project Structure
+
+For a deep dive into the directory layout, please refer to the [Project Structure section of the README](README.md#-project-structure).
+
+---
+
+## ❓ Questions?
+If you have questions, please use [GitHub Discussions](../../discussions) instead of opening an issue. This keeps the issue tracker clean for actionable tasks.
