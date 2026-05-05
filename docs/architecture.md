@@ -1,77 +1,96 @@
-# Architecture
+# Stellar Oracle: System Architecture
 
-## Overview
+This document provides a deep dive into the technical design, storage patterns, and security model of the **Stellar Oracle**.
 
-Stellar Oracle is a decentralized price feed network for the Soroban smart contract platform. It follows a **push-based publisher model**: off-chain bots submit signed price updates on-chain, and the contract aggregates them into a single canonical price per asset pair.
+---
 
+## 🏗️ System Overview
+
+Stellar Oracle follows a **push-based multi-publisher model**. Unlike pull-based oracles that fetch data on-demand (often incurring high latency), Stellar Oracle allows authorized publishers to push data on-chain, which is then aggregated into a canonical "Source of Truth" available for immediate, low-latency consumption by other smart contracts.
+
+```mermaid
+graph TD
+    subgraph Off-Chain
+        P1[Publisher Bot A]
+        P2[Publisher Bot B]
+        P3[Publisher Bot C]
+    end
+
+    subgraph Soroban Contract
+        OC[Oracle Core]
+        AG[Aggregation Engine]
+        CB[Circuit Breaker]
+    end
+
+    subgraph Storage
+        TS[(Temporary Storage)]
+        IS[(Instance Storage)]
+    end
+
+    P1 -- submit_price --> OC
+    P2 -- submit_price --> OC
+    P3 -- submit_price --> OC
+
+    OC --> CB
+    CB --> AG
+    AG --> TS
+    AG --> IS
+    
+    Consumer[DeFi Protocol] -- get_price_fresh --> IS
 ```
-┌─────────────────┐     submit_price()     ┌──────────────────────┐
-│  Publisher Bot  │ ──────────────────────▶│                      │
-│  (TypeScript)   │                        │   oracle-core        │
-└─────────────────┘                        │   (Soroban contract) │
-                                           │                      │
-┌─────────────────┐     get_price()        │  - publisher registry│
-│  Consumer dApp  │ ◀──────────────────────│  - per-publisher     │
-│  or Contract    │                        │    price entries     │
-└─────────────────┘                        │  - aggregated feeds  │
-                                           └──────────────────────┘
-```
 
-## Publisher Model
+---
 
-- The admin registers a set of **trusted publishers** (Stellar addresses).
-- Each publisher runs an off-chain bot that fetches prices from external APIs and calls `submit_price(publisher, asset, price, timestamp)`.
-- The publisher must sign the transaction — the contract calls `publisher.require_auth()`.
-- Any number of asset pairs (e.g. `XLM/USD`, `BTC/USD`) can be tracked; new pairs are created automatically on first submission.
+## 🛡️ Trust & Security Model
 
-## Median Aggregation
+### Decentralized Publishers
+The Oracle does not rely on a single data source. The Administrator whitelists a set of **Trusted Publishers**. Each submission requires cryptographic proof of identity via Soroban's `require_auth()` mechanism.
 
-On every `submit_price` call, the contract:
+### Median Aggregation
+On every valid submission, the contract triggers a re-aggregation of all known data points for that asset. 
+- The contract fetches every active publisher's most recent entry from temporary storage.
+- It sorts the values and selects the **Median**.
+- **Resilience**: A malicious publisher cannot move the median alone. An attacker would need to compromise **>50%** of the registered publishers to manipulate the aggregated price.
 
-1. Stores the new entry in **temporary storage** keyed by `(asset, publisher)`.
-2. Reads all known publishers and collects their latest entry for that asset.
-3. Sorts the prices and computes the **median** (average of two middle values for even N).
-4. Writes the aggregated `FeedData` to **instance storage**.
+### On-Chain Circuit Breaker
+The contract implements a protection layer called the **Deviation Limit**.
+- **Configuration**: Admin sets `max_deviation_bps` (basis points).
+- **Enforcement**: If a new price deviates from the *current* median by more than the threshold (e.g., 5%), the submission is rejected.
+- **Purpose**: This prevents flash-loan attacks or exchange glitches from poisoning the oracle's state before administrators or automated bots can react.
 
-Median is chosen over mean because it is resistant to a single outlier publisher submitting a manipulated price. A publisher would need to control >50% of registered publishers to move the median.
+---
 
-## Storage Layout
+## 💾 Storage Strategy
 
-| Key | Storage type | Value | Notes |
-|-----|-------------|-------|-------|
-| `ADMIN` | Instance | `Address` | Set once at `initialize` |
-| `PUBS` | Instance | `Vec<Address>` | Registered publishers |
-| `FEEDS` | Instance | `Map<String, FeedData>` | Latest aggregated price per asset |
-| `(asset, publisher)` | Temporary | `PriceEntry` | Per-publisher raw submission, TTL ~7 days |
+Stellar Oracle is optimized for the Soroban storage fee model:
 
-**Instance storage** persists indefinitely (subject to rent). **Temporary storage** expires after the configured TTL — publisher entries are extended to ~7 days on each submission.
+| Layer | Type | Key | Purpose |
+| :--- | :--- | :--- | :--- |
+| **Global State** | Instance | `ADMIN`, `PUBS`, `MAXDEV` | Core configuration and whitelists. |
+| **Aggregated Feeds** | Instance | `FEEDS` | The latest canonical price for each asset. |
+| **Publisher Entries** | Temporary | `(asset, publisher)` | Individual "votes" from publishers. TTL is ~7 days. |
 
-## Staleness
+By using **Temporary Storage** for individual submissions, the oracle maintains a small footprint. If a publisher stops reporting, their data automatically "drops out" of the aggregation once the TTL expires, ensuring the oracle doesn't get stuck on stale data from dead nodes.
 
-Consumers can call `get_price_fresh(asset, max_age_secs)` to get a price only if it was updated within the given window. If the feed is stale, the call panics. This lets consumer contracts enforce their own freshness requirements.
+---
 
-## Consumer Integration
+## 📅 Precision & Scaling
 
-From another Soroban contract, invoke the oracle via cross-contract call:
+To avoid floating-point inaccuracies and ensure deterministic behavior across the network, all prices are handled as **i128** integers scaled by **1e7**.
+
+- **Internal representation**: `price_integer = actual_price * 10,000,000`
+- **Example**: A BTC price of `$64,120.50` is stored as `641,205,000,000`.
+
+---
+
+## 🚀 Integration Patterns
+
+### Cross-Contract Consumption (Rust)
+Contracts should use `get_price_fresh` to ensure they are not acting on "zombie" data during network congestion or publisher downtime.
 
 ```rust
-let feed: FeedData = env.invoke_contract(
-    &oracle_address,
-    &symbol_short!("get_price"),
-    vec![&env, asset.into_val(&env)],
-);
+let feed = oracle_client.get_price_fresh(&asset_string, &max_age_secs);
 ```
 
-From a TypeScript dApp, use the `OracleConsumer` SDK class.
-
-## SDK
-
-- **`OraclePublisher`** — signs and submits price transactions.
-- **`OracleConsumer`** — simulates read-only calls (no signing required).
-- **`publisher-bot.ts`** — example bot fetching from CoinGecko, submitting every 60s.
-
-## Trust Assumptions
-
-- Publishers are trusted by the admin. A compromised publisher can submit wrong prices, but cannot move the median alone if there are ≥3 publishers.
-- The admin key is privileged — it can add/remove publishers and transfer admin. Protect it accordingly (multisig recommended for production).
-- Temporary storage entries expire — if a publisher goes offline for >7 days, their entry drops out of aggregation automatically.
+### SDK Consumption (TypeScript)
+The `OracleConsumer` provides a high-level wrapper around the Stellar SDK to simulate contract calls, allowing for zero-fee price reads in frontends and backend services.

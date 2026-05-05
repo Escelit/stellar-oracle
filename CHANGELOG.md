@@ -6,14 +6,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
-- `oracle-core` Soroban smart contract with median price aggregation
-- `initialize`, `add_publisher`, `remove_publisher`, `get_publishers` admin functions
-- `submit_price` with per-publisher temporary storage and automatic re-aggregation
-- `get_price`, `get_price_fresh`, `get_assets` read functions
-- TTL extension on publisher price entries (~7 days)
-- TypeScript `OraclePublisher` SDK class for submitting prices
-- TypeScript `OracleConsumer` SDK class for reading prices
-- Automated publisher bot fetching XLM/USD, BTC/USD, ETH/USD from CoinGecko
-- `toFloat` / `toScaled` price conversion utilities
-- CI: Rust tests, TypeScript build, clippy, fmt
-- Testnet deployment at `CA76KLJ2CDD5OHVGD6MUV3QVZYRNJJQLIHBMWD353J6ES4JZXCO4L5OQ`
+- **Security**: Implemented **Circuit Breaker** (max deviation limits) in `submit_price` to prevent price manipulation.
+- **Docs**: Comprehensive documentation overhaul with premium branding, ecosystem diagrams, and technical deep-dives.
+- **SDK**: Added `OraclePublisher` and `OracleConsumer` classes for seamless integration.
+- **Infrastructure**: Automated publisher bot with multi-asset support (XLM, BTC, ETH).
+- **Architecture**: Hybrid storage model utilizing `Instance` and `Temporary` storage for gas efficiency.
+
+### Fixed
+- Fixed TTL extension logic for publisher entries to ensure reliable ~7-day persistence.
+- Improved error handling for unauthorized publisher submissions.
+
+### Deployment
+- **Testnet**: `CA76KLJ2CDD5OHVGD6MUV3QVZYRNJJQLIHBMWD353J6ES4JZXCO4L5OQ`
