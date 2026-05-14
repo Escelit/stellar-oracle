@@ -16,6 +16,8 @@ const ASSETS: Record<string, string> = {
   "XLM/USD": "stellar",
   "BTC/USD": "bitcoin",
   "ETH/USD": "ethereum",
+  "USDC/USD": "usd-coin",
+  "USDT/USD": "tether",
 };
 
 async function fetchPrices(): Promise<Record<string, number>> {
@@ -27,7 +29,17 @@ async function fetchPrices(): Promise<Record<string, number>> {
 
   const prices: Record<string, number> = {};
   for (const [pair, geckoId] of Object.entries(ASSETS)) {
-    prices[pair] = data[geckoId].usd;
+    const price = data[geckoId].usd;
+    
+    // Deviation alert for stablecoins (USDC/USDT)
+    if (pair === "USDC/USD" || pair === "USDT/USD") {
+      const deviation = Math.abs(price - 1.0);
+      if (deviation > 0.005) { // 0.5% deviation from $1.00
+        console.warn(`[ALERT] ${pair} price is $${price}, deviating > 0.5% from peg!`);
+      }
+    }
+    
+    prices[pair] = price;
   }
   return prices;
 }
