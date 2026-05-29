@@ -33,15 +33,15 @@ async function fetchPrices(): Promise<Record<string, number>> {
 }
 
 async function run() {
-  const secret = process.env.PUBLISHER_SECRET;
-  const contractId = process.env.CONTRACT_ID;
+  const secret = process.env.PUBLISHER_SECRET_KEY;
+  const contractId = process.env.ORACLE_CONTRACT_ID;
   const rpcUrl = process.env.RPC_URL ?? "https://soroban-testnet.stellar.org";
   const networkPassphrase = process.env.ORACLE_NETWORK ?? Networks.TESTNET;
   const dryRun = process.argv.includes("--dry-run");
   const once = process.argv.includes("--once");
 
   if (!dryRun && (!secret || !contractId)) {
-    console.error("Set PUBLISHER_SECRET and CONTRACT_ID env vars");
+    console.error("Set PUBLISHER_SECRET_KEY and ORACLE_CONTRACT_ID env vars");
     process.exit(1);
   }
 

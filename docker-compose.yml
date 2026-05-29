@@ -1,0 +1,10 @@
+services:
+  publisher-bot:
+    build: .
+    environment:
+      PUBLISHER_SECRET_KEY: ""
+      ORACLE_CONTRACT_ID: ""
+      RPC_URL: "https://soroban-testnet.stellar.org"
+      ORACLE_NETWORK: "TESTNET"
+      ASSETS: "XLM/USD,BTC/USD,ETH/USD"
+      INTERVAL_MS: "60000"
